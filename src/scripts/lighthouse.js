@@ -1,15 +1,21 @@
 const puppeteer = require('puppeteer')
 const lighthouse = require('lighthouse')
+const desktopConfig = require('lighthouse/lighthouse-core/config/desktop-config')
+const mobileConfig = require('lighthouse/lighthouse-core/config/default-config')
 const { URL } = require('url')
 
-var arguments = process.argv.splice(2);
+const args = process.argv.splice(2)
+const extendsData = [
+  mobileConfig,
+  desktopConfig
+]
 
 ;(async () => {
-  if(!arguments[0])  {
-    console.log("arguments error")
+  if (!args[0]) {
+    console.log('arguments error')
     return
   }
-  const url = arguments[0]
+  const [url, extendsIndex ] = args
   // 启动 puppeteer
   const browser = await puppeteer.launch({
     // headless: false,
@@ -28,11 +34,9 @@ var arguments = process.argv.splice(2);
     {
       onlyCategories: ['performance'],
       port: new URL(browser.wsEndpoint()).port,
-      output: 'json'
+      output: 'json',
     },
-    {
-      extends: 'lighthouse:default',
-    }
+    extendsData[extendsIndex]||extendsData[0]
   )
   // fs.writeFileSync('perf.json',rest.report)
   const indexes = [
@@ -58,6 +62,6 @@ var arguments = process.argv.splice(2);
     const val = JSON.parse(report)?.audits[el]?.displayValue
     console.log(parseFloat(val))
   })
-  console.log(`${lhr.categories.performance.score*100}`)
+  console.log(`${lhr.categories.performance.score * 100}`)
   await browser.close()
 })()
